@@ -151,7 +151,7 @@ class StdPeriodic(Kern):
         return full[dimX,:,:]
         
     def dK_dX2(self, X, X2, dimX2):
-        return -self.dK_dX(X, X2, dimX2)
+        return -self._clean_dK_dX(X, X2, dimX2)
     
     def dK2_dXdX2(self, X, X2, dimX, dimX2):
         lengthscale2inv = np.ones(X.shape[1])/(self.lengthscale**2)
@@ -161,7 +161,7 @@ class StdPeriodic(Kern):
         base = np.pi * dist * periodinv[:,None,None]
         exp_dist = np.exp( -0.5* np.sum( np.square(  np.sin( base ) / self.lengthscale[:,None,None] ), axis = 0 ) )
         k = self.variance*exp_dist
-        dk_dx2 = self.dK_dX2( X, X2, dimX2)
+        dk_dx2 = self._clean_dK_dX2( X, X2, dimX2)
         ret = -dk_dx2*np.pi/2.*lengthscale2inv[dimX]*periodinv[dimX]*np.sin(2.*base[dimX,:,:])
         if dimX == dimX2:
             ret += k*(np.pi**2)*period2inv[dimX]*lengthscale2inv[dimX]*np.cos(2.*base[dimX,:,:])
@@ -225,7 +225,7 @@ class StdPeriodic(Kern):
         dist = np.rollaxis(X[:, None, :] - X2[None, :, :],2,0)
         base = np.pi * dist *periodinv[:,None,None]
         exp_dist = np.exp( -0.5* np.sum( np.square(  np.sin( base ) / self.lengthscale[:,None,None] ), axis = 0 ) )
-        k = self.K(X,X2)
+        k = self._clean_K(X,X2)
         dk_dperiod = self.dK_dperiod(X,X2)
         if self.ARD1:
             ret = -dk_dperiod*np.pi*np.sin(2.*base[dimX,:,:])*lengthscale2inv[dimX]*periodinv[dimX]/2.
@@ -271,7 +271,7 @@ class StdPeriodic(Kern):
         exp_dist = np.exp( -0.5* np.sum( np.square(  np.sin( base ) / self.lengthscale[:,None,None] ), axis = 0 ) )
         k = self.variance*exp_dist;
         dk2_dlengthgthscaledx2 = self.dK2_dlengthscaledX2(X, X2, dimX2)
-        dk_dx2 = self.dK_dX2(X,X2,dimX2)
+        dk_dx2 = self._clean_dK_dX2(X,X2,dimX2)
         dk_dlengthscale = self.dK_dlengthscale(X, X2)
         I = np.eye((X.shape[1]))
         if self.ARD2:
@@ -310,7 +310,7 @@ class StdPeriodic(Kern):
         exp_dist = np.exp( -0.5* np.sum( np.square(  np.sin( base ) / self.lengthscale[:,None,None] ), axis = 0 ) )
         k = self.variance*exp_dist
         dk2_dperioddx2 = self.dK2_dperioddX2(X, X2, dimX2)
-        dk_dx2 = self.dK_dX2(X, X2, dimX2)
+        dk_dx2 = self._clean_dK_dX2(X, X2, dimX2)
         dk_dperiod = self.dK_dperiod(X, X2)
         if self.ARD1:
             tmp1 = -dk2_dperioddx2*np.pi/2.*lengthscale2inv[dimX]*periodinv[dimX]*np.sin(2.*base[dimX,:,:])

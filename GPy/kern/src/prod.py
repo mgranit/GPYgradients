@@ -76,48 +76,40 @@ class Prod(CombinationKernel):
     
     @Cache_this(limit=3, force_kwargs=['which_parts'])
     def dK_dX(self, X, X2, dimX, which_parts=None):
-        if len(self.parts)==2:
-            return self.parts[1].K(X,X2)*self.parts[0].dK_dX(X, X2,dimX) + self.parts[1].dK_dX(X, X2,dimX)*self.parts[0].K(X,X2)
-        else:
-            temp = np.zeros((X.shape[1], X.shape[0], X2.shape[0]))
-            for combination in itertools.combinations(self.parts, len(self.parts) - 1):
-                prod = reduce(np.multiply, [p.K(X, X2) for p in combination])
-                to_update = list(set(self.parts) - set(combination))[0]
-                temp += prod*to_update.dK_dX(X, X2, dimX)
-            return temp
+        temp = np.zeros((X.shape[0], X2.shape[0]))
+        for combination in itertools.combinations(self.parts, len(self.parts) - 1):
+            prod = reduce(np.multiply, [p.K(X, X2) for p in combination])
+            to_update = list(set(self.parts) - set(combination))[0]
+            temp += prod*to_update.dK_dX(X, X2, dimX)
+        return temp
 
     @Cache_this(limit=3, force_kwargs=['which_parts'])
-    def dK_dX2(self, X, X2, dimX, which_parts=None):
-        if len(self.parts)==2:
-            return self.parts[1].K(X,X2)*self.parts[0].dK_dX2(X, X2, dimX) + self.parts[1].dK_dX2(X, X2, dimX)*self.parts[0].K(X,X2)
-        else:
-            tmp = np.zeros((X.shape[1], X.shape[0], X2.shape[0]))
-            for combination in itertools.combinations(self.parts, len(self.parts) - 1):
-                prod = reduce(np.multiply, [p.K(X, X2) for p in combination])
-                to_update = list(set(self.parts) - set(combination))[0]
-                tmp += prod*to_update.dK_dX2(X, X2)
-            return tmp
+    def dK_dX2(self, X, X2, dimX2, which_parts=None):
+        temp = np.zeros((X.shape[0], X2.shape[0]))
+        for combination in itertools.combinations(self.parts, len(self.parts) - 1):
+            prod = reduce(np.multiply, [p.K(X, X2) for p in combination])
+            to_update = list(set(self.parts) - set(combination))[0]
+            temp += prod*to_update.dK_dX2(X, X2, dimX2)
+        return temp
 
     @Cache_this(limit=3, force_kwargs=['which_parts'])	  
     def dK2_dXdX2(self, X, X2, dimX, dimX2, which_parts=None):
-        if len(self.parts)==2:
-            return self.parts[0].dK_dX(X,X2, dimX)*self.parts[1].dK_dX2(X,X2,dimX2) + self.parts[1].dK_dX(X,X2,dimX)*self.parts[0].dK_dX2(X,X2,dimX2) + self.parts[0].dK2_dXdX2(X,X2, dimX, dimX2)*self.parts[1].K(X,X2) + self.parts[1].dK2_dXdX2(X,X2, dimX,dimX2)*self.parts[0].K(X,X2)
-        elif len(self.parts)==3:
-            k1 = self.parts[0]
-            k2 = self.parts[1]
-            k3 = self.parts[2]
-            return k1.dK2_dXdX2(X,X2)*k2.K(X,X2)*k3.K(X,X2) + k1.K(X,X2)*k2.dK2_dXdX2(X,X2)*k3.K(X,X2) + k1.K(X,X2)*k2.K(X,X2)*k3.dK2_dXdX2(X,X2) + k1.dK_dX(X,X2)*k2.dK_dX2(X,X2)*k3.K(X,X2) + k1.dK_dX(X,X2)*k2.K(X,X2)*k3.dK_dX2(X,X2) + k1.dK_dX2(X,X2)*k2.dK_dX(X,X2)*k3.K(X,X2) + k1.K(X,X2)*k2.dK_dX(X,X2)*k3.dK_dX2(X,X2) + k1.dK_dX2(X,X2)*k2.K(X,X2)*k3.dK_dX(X,X2) + k1.K(X,X2)*k2.dK_dX2(X,X2)*k3.dK_dX(X,X2)
+        if len(self.parts) == 2:
+            return self.parts[0].dK_dX(X, X2, dimX) * self.parts[1].dK_dX2(X, X2, dimX2) + \
+                   self.parts[0].dK_dX2(X, X2, dimX2) * self.parts[1].dK_dX(X, X2, dimX) + \
+                   self.parts[0].dK2_dXdX2(X, X2, dimX, dimX2) * self.parts[1].K(X, X2)  + \
+                   self.parts[0].K(X, X2) * self.parts[1].dK2_dXdX2(X, X2, dimX, dimX2)
         else:
-            tmp = np.zeros((X.shape[1], X2.shape[1], X.shape[0], X2.shape[0]))
+            temp = np.zeros((X.shape[0], X2.shape[0]))
             for combination1 in itertools.combinations(self.parts, len(self.parts) - 1):
                 prod = reduce(np.multiply, [p.K(X, X2) for p in combination1])
                 to_update1 = list(set(self.parts) - set(combination1))[0]
-                tmp += prod*to_update1.dK2_dXdX2(X, X2)
+                temp += prod*to_update1.dK2_dXdX2(X, X2, dimX, dimX2)
                 for combination2 in itertools.combinations(combination1, len(combination1) - 1):
                     prod = reduce(np.multiply, [p.K(X, X2) for p in combination2])
                     to_update2 = list(set(combination1)-set(combination2))[0]
-                    tmp += prod*to_update1.dK_dX(X, X2)*to_update2.dK2_dX2(X,X2)
-            return tmp
+                    temp += prod*to_update1.dK_dX(X, X2, dimX)*to_update2.dK_dX2(X, X2, dimX2)
+            return temp
 
     def update_gradients_direct(self, *args):
         for i, (g,p) in enumerate(zip(args, self.parts)):

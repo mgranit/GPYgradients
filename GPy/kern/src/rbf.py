@@ -60,7 +60,7 @@ class RBF(Stationary):
         return -1.*K*dist*lengthscale2inv
     @Cache_this(limit=3, ignore_args=())
     def dK_dX2(self, X, X2, dimX2):
-        return -self.dK_dX(X,X2, dimX2)
+        return -self._clean_dK_dX(X, X2, dimX2)
     
     @Cache_this(limit=3, ignore_args=())
     def dK2_dXdX2(self, X, X2, dimX, dimX2):
@@ -83,7 +83,7 @@ class RBF(Stationary):
     
     @Cache_this(limit=3, ignore_args=())
     def dK_dvariance(self,X,X2):
-        return self.K(X,X2)/self.variance
+        return self._clean_K(X,X2)/self.variance
     
     @Cache_this(limit=3, ignore_args=())
     def dK_dlengthscale(self,X,X2):
@@ -103,15 +103,15 @@ class RBF(Stationary):
     
     @Cache_this(limit=3, ignore_args=())
     def dK2_dvariancedX(self, X, X2, dim):
-        return self.dK_dX(X,X2, dim)/self.variance
+        return self._clean_dK_dX(X,X2, dim)/self.variance
     
     @Cache_this(limit=3, ignore_args=())
     def dK2_dvariancedX2(self, X, X2, dim):
-        return self.dK_dX2(X,X2, dim)/self.variance
+        return self._clean_dK_dX2(X,X2, dim)/self.variance
     
     @Cache_this(limit=3, ignore_args=())
     def dK3_dvariancedXdX2(self, X, X2, dim, dimX2):
-        return self.dK2_dXdX2(X, X2, dim, dimX2)/self.variance
+        return self._clean_dK2_dXdX2(X, X2, dim, dimX2)/self.variance
 
     @Cache_this(limit=3, ignore_args=())
     def dK2_dlengthscaledX(self, X, X2, dimX):

@@ -77,6 +77,11 @@ class MultioutputGP(GP):
                 #Y_metadata={'output_index': ind}
         return super(MultioutputGP, self).predictive_gradients(Xnew, kern)
 
+    def predictive_gradients_simplified(self, Xnew, kern=None):
+        if isinstance(Xnew, list):
+            Xnew, _, ind = util.multioutput.build_XY(Xnew,None)
+        return super(MultioutputGP, self).predictive_gradients_simplified(Xnew, kern)
+
     def predictive_gradients(self, Xnew, kern=None): #XNEW IS NOT A LIST!!
         """
         Compute the derivatives of the predicted latent function with respect to X*

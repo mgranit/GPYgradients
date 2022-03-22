@@ -58,6 +58,7 @@ class RBF(Stationary):
         dist = X[:,None,dimX]-X2[None,:,dimX]
         lengthscale2inv = (np.ones((X.shape[1]))/(self.lengthscale**2))[dimX]
         return -1.*K*dist*lengthscale2inv
+
     @Cache_this(limit=3, ignore_args=())
     def dK_dX2(self, X, X2, dimX2):
         return -self._clean_dK_dX(X, X2, dimX2)
@@ -71,6 +72,25 @@ class RBF(Stationary):
         dist = X[:,None,:]-X2[None,:,:]
         lengthscale2inv = np.ones((X.shape[1]))/(self.lengthscale**2)
         return -1.*K*dist[:,:,dimX]*dist[:,:,dimX2]*lengthscale2inv[dimX]*lengthscale2inv[dimX2] + (dimX==dimX2)*K*lengthscale2inv[dimX]
+
+    @Cache_this(limit=3, ignore_args=())
+    def dK2_dXdX(self, X, X2, dimX_0, dimX_1):
+        return -self._clean_dK2_dXdX2(X, X2, dimX_0, dimX_1)        
+
+    @Cache_this(limit=3, ignore_args=())
+    def dK3_dXdXdX2(self, X, X2, dimX_0, dimX_1, dimX2):
+        r = self._scaled_dist(X, X2)
+        K = self.K_of_r(r)
+        if X2 is None:
+            X2=X
+        dist = X[:,None,:]-X2[None,:,:]
+        lengthscale2inv = np.ones((X.shape[1]))/(self.lengthscale**2)
+        return K*(dist[:,:,dimX_0]*lengthscale2inv[dimX_0]*\
+                  dist[:,:,dimX_1]*lengthscale2inv[dimX_1]*\
+                  dist[:,:,dimX2]*lengthscale2inv[dimX2]-\
+                  (dimX_0==dimX_1)*dist[:,:,dimX2]*lengthscale2inv[dimX2]*lengthscale2inv[dimX_0]-\
+                  (dimX_1==dimX2)*dist[:,:,dimX_0]*lengthscale2inv[dimX_0]*lengthscale2inv[dimX_1] -\
+                  (dimX2==dimX_0)*dist[:,:,dimX_1]*lengthscale2inv[dimX_1]*lengthscale2inv[dimX2] )
 
     def dK_dr(self, r):
         return -r*self.K_of_r(r)

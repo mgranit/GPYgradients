@@ -453,6 +453,24 @@ class GP(Model):
             var_jac += kern.gradients_X(alpha, Xnew, self._predictive_variable)
         return mean_jac, var_jac
 
+    def predictive_gradients_simplified(self, Xnew, kern=None):
+
+        if kern is None:
+            kern = self.kern
+
+        mean_jac = np.empty((Xnew.shape[0], Xnew.shape[1]-1))
+        var_jac = np.empty((Xnew.shape[0], Xnew.shape[1]-1))
+
+        X = self._predictive_variable
+        alpha = self.posterior.woodbury_vector
+        Wi = self.posterior.woodbury_inv
+
+        for i in range(Xnew.shape[1]-1):
+            mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
+            var_jac[:,i] = (kern.dK_dX(Xnew, Xnew, i) - np.dot(2.*np.dot(kern.K(Xnew, X), Wi), kern.dK_dX(Xnew, X, i).T)).diagonal()
+
+        return mean_jac, var_jac
+
     def predict_jacobian(self, Xnew, kern=None, full_cov=False):
         """
         Compute the derivatives of the posterior of the GP.

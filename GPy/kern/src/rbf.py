@@ -116,7 +116,7 @@ class RBF(Stationary):
         if self.ARD:
             g = []
             for diml in range(X.shape[1]):
-                g += [ (dist[:,:,dimX]**2)*(lengthscaleinv[diml]**3)*K]
+                g += [ (dist[:,:,diml]**2)*(lengthscaleinv[diml]**3)*K]
         else:
             g = np.sum(dist**2, axis=2)*(lengthscaleinv[0]**3)*K
         return g

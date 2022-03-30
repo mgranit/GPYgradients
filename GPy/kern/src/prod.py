@@ -106,6 +106,19 @@ class Prod(CombinationKernel):
         return prod_sum
 
     @Cache_this(limit=3, force_kwargs=['which_parts'])    
+    def dK2_dXdX2diag(self, X, dimX, which_parts=None):
+        prod_sum = np.zeros(X.shape[0])
+        for combination1 in itertools.combinations(self.parts, len(self.parts) - 1):
+            prod = reduce(np.multiply, [p.Kdiag(X) for p in combination1])
+            to_update1 = list(set(self.parts) - set(combination1))[0]
+            prod_sum += prod*to_update1.dK2_dXdX2diag(X, dimX)
+            for combination2 in itertools.combinations(combination1, len(combination1) - 1):
+                prod = reduce(np.multiply, [p.Kdiag(X) for p in combination2]) if len(combination2) > 0 else np.ones(prod_sum.shape)
+                to_update2 = list(set(combination1)-set(combination2))[0]
+                prod_sum += prod*to_update1.dK_dXdiag(X, dimX)*to_update2.dK_dX2diag(X, dimX)
+        return prod_sum
+
+    @Cache_this(limit=3, force_kwargs=['which_parts'])    
     def dK2_dXdX(self, X, X2, dimX_0, dimX_1, which_parts=None):
         prod_sum = np.zeros((X.shape[0], X2.shape[0]))
         for combination1 in itertools.combinations(self.parts, len(self.parts) - 1):

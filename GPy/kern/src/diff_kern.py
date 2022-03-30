@@ -38,7 +38,7 @@ class DiffKern(Kern):
  
     @Cache_this(limit=3, ignore_args=())
     def Kdiag(self, X):
-        return np.diag(self.base_kern.dK2_dXdX2(X,X, self.dimension, self.dimension))
+        return self.base_kern.dK2_dXdX2diag(X, self.dimension)
     
     @Cache_this(limit=3, ignore_args=())
     def dK_dX_wrap(self, X, X2): #X in dimension self.dimension

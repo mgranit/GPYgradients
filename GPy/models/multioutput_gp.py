@@ -96,25 +96,27 @@ class MultioutputGP(GP):
         
         slices = index_to_slices(Xnew[:,-1])
 
-        for kern in self.kern.kern:
-            if kern.name  == 'DiffKern':
-                kern = self.kern
-                dims = Xnew.shape[1]-1
-
-                mean_jac = np.empty((Xnew.shape[0], dims))
-                var_jac = np.empty((Xnew.shape[0], dims))
-
-                X = self._predictive_variable
-                alpha = self.posterior.woodbury_vector
-                Wi = self.posterior.woodbury_inv
-
-                for i in range(dims):
-                    mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
-                    var_jac[:,i] = (kern.dK_dX(Xnew, Xnew, i) - np.dot(2.*np.dot(kern.K(Xnew, X), Wi), kern.dK_dX(Xnew, X, i).T)).diagonal()
-                return mean_jac, var_jac
-
         if kern is None:
             kern = self.kern
+
+        if self.kern.kern[0].name == 'mul' and all([(kern.name == 'DiffKern') for kern in self.kern.kern[1:]]):
+            '''
+            Predictive gradients for models that observe gradients.
+            '''
+            dims = Xnew.shape[1]-1
+
+            mean_jac = np.empty((Xnew.shape[0], dims))
+            var_jac = np.empty((Xnew.shape[0], dims))
+
+            X = self._predictive_variable
+            alpha = self.posterior.woodbury_vector
+            Wi = self.posterior.woodbury_inv
+
+            for i in range(dims):
+                mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
+                var_jac[:,i] = (kern.dK_dX(Xnew, Xnew, i) - np.dot(2.*np.dot(kern.K(Xnew, X), Wi), kern.dK_dX(Xnew, X, i).T)).diagonal()
+            return mean_jac, var_jac
+
         mean_jac = np.empty((Xnew.shape[0],Xnew.shape[1]-1,self.output_dim))
         for i in range(self.output_dim):
             mean_jac[:,:,i] = kern.gradients_X(self.posterior.woodbury_vector[:,i:i+1].T, Xnew, self._predictive_variable)[:,0:-1]

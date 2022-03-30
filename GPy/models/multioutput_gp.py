@@ -77,11 +77,6 @@ class MultioutputGP(GP):
                 #Y_metadata={'output_index': ind}
         return super(MultioutputGP, self).predictive_gradients(Xnew, kern)
 
-    def predictive_gradients_simplified(self, Xnew, kern=None):
-        if isinstance(Xnew, list):
-            Xnew, _, ind = util.multioutput.build_XY(Xnew,None)
-        return super(MultioutputGP, self).predictive_gradients_simplified(Xnew, kern, multioutput=True)
-
     def predictive_gradients(self, Xnew, kern=None): #XNEW IS NOT A LIST!!
         """
         Compute the derivatives of the predicted latent function with respect to X*
@@ -100,11 +95,24 @@ class MultioutputGP(GP):
             Xnew, _, ind  = util.multioutput.build_XY(Xnew, None)
         
         slices = index_to_slices(Xnew[:,-1])
-        
-        for i in range(len(slices)):
-            if ((self.kern.kern[i].name == 'diffKern' ) and len(slices[i])>0):
-                assert 0, "It is not (yet) possible to predict gradients of gradient observations, sorry :)"
- 
+
+        for kern in self.kern.kern:
+            if kern.name  == 'DiffKern':
+                kern = self.kern
+                dims = Xnew.shape[1]-1
+
+                mean_jac = np.empty((Xnew.shape[0], dims))
+                var_jac = np.empty((Xnew.shape[0], dims))
+
+                X = self._predictive_variable
+                alpha = self.posterior.woodbury_vector
+                Wi = self.posterior.woodbury_inv
+
+                for i in range(dims):
+                    mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
+                    var_jac[:,i] = (kern.dK_dX(Xnew, Xnew, i) - np.dot(2.*np.dot(kern.K(Xnew, X), Wi), kern.dK_dX(Xnew, X, i).T)).diagonal()
+                return mean_jac, var_jac
+
         if kern is None:
             kern = self.kern
         mean_jac = np.empty((Xnew.shape[0],Xnew.shape[1]-1,self.output_dim))

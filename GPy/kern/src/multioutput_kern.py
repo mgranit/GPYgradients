@@ -111,6 +111,14 @@ class MultioutputKern(CombinationKernel):
         target = np.zeros(X.shape[0])
         [[np.copyto(target[s], kern.Kdiag(X[s])) for s in slices_i] for kern, slices_i in zip(kerns, slices)]
         return target
+
+    @Cache_this(limit=3, ignore_args=())
+    def dK_dXdiag(self, X, dimX_0):
+        slices = index_to_slices(X[:,self.index_dim])
+        kerns = itertools.repeat(self.kern) if self.single_kern else self.kern
+        target = np.zeros(X.shape[0])
+        [[np.copyto(target[s], kern.dK_dXdiag(X[s], dimX_0)) for s in slices_i] for kern, slices_i in zip(kerns, slices)]
+        return target
     
     def _update_gradients_full_wrapper(self, kern, dL_dK, X, X2):
         gradient = kern.gradient.copy()

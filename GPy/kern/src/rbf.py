@@ -86,9 +86,13 @@ class RBF(Stationary):
         return -self._clean_dK2_dXdX2(X, X2, dimX_0, dimX_1)
 
     @Cache_this(limit=3, ignore_args=())
-    def dK2_dXdX2diag(self, X, dimX):
+    def dK2_dXdX2diag(self, X, dimX, dimX2):
         lengthscale2inv = np.ones((X.shape[1]))/(self.lengthscale**2)
-        return np.ones(X.shape[0])*self.variance*lengthscale2inv[dimX]
+        return np.ones(X.shape[0])*self.variance*lengthscale2inv[dimX]*(dimX==dimX2)
+
+    @Cache_this(limit=3, ignore_args=())
+    def dK2_dXdXdiag(self, X, dimX, dimX2):
+        return -self._clean_dK2_dXdX2diag(X, dimX, dimX2)
 
     @Cache_this(limit=3, ignore_args=())
     def dK3_dXdXdX2(self, X, X2, dimX_0, dimX_1, dimX2):
@@ -104,6 +108,10 @@ class RBF(Stationary):
                   (dimX_0==dimX_1)*dist[:,:,dimX2]*lengthscale2inv[dimX2]*lengthscale2inv[dimX_0]-\
                   (dimX_1==dimX2)*dist[:,:,dimX_0]*lengthscale2inv[dimX_0]*lengthscale2inv[dimX_1] -\
                   (dimX2==dimX_0)*dist[:,:,dimX_1]*lengthscale2inv[dimX_1]*lengthscale2inv[dimX2] )
+
+    @Cache_this(limit=3, ignore_args=())
+    def dK3_dXdXdX2diag(self, X, dimX_0, dimX):
+        return np.zeros(X.shape[0])
 
     def dK_dr(self, r):
         return -r*self.K_of_r(r)

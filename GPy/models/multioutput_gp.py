@@ -99,7 +99,7 @@ class MultioutputGP(GP):
         if kern is None:
             kern = self.kern
 
-        if self.kern.kern[0].name == 'mul' and all([(kern.name == 'DiffKern') for kern in self.kern.kern[1:]]):
+        if all([(kern.name == 'DiffKern') for kern in self.kern.kern[1:]]):
             '''
             Predictive gradients for models that observe gradients.
             '''
@@ -114,7 +114,7 @@ class MultioutputGP(GP):
 
             for i in range(dims):
                 mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
-                var_jac[:,i] = (kern.dK_dX(Xnew, Xnew, i) - np.dot(2.*np.dot(kern.K(Xnew, X), Wi), kern.dK_dX(Xnew, X, i).T)).diagonal()
+                var_jac[:,i] = kern.dK_dXdiag(Xnew, i) - 2 * (np.dot(kern.K(Xnew, X), Wi) * kern.dK_dX(Xnew, X, i)).sum(-1)
             return mean_jac, var_jac
 
         mean_jac = np.empty((Xnew.shape[0],Xnew.shape[1]-1,self.output_dim))

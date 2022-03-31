@@ -173,13 +173,16 @@ class StdPeriodic(Kern):
             ret += k*(np.pi**2)*period2inv[dimX]*lengthscale2inv[dimX]*np.cos(2.*base[dimX,:,:])
         return ret
 
-    def dK2_dXdX2diag(self, X, dimX):
+    def dK2_dXdX(self, X, X2, dimX, dimX2):
+        return -self._clean_dK2_dXdX2(X, X2, dimX, dimX2)
+
+    def dK2_dXdX2diag(self, X, dimX, dimX2):
         lengthscale2inv = np.ones((X.shape[1]))/(self.lengthscale**2)
         period2inv = np.ones((X.shape[1]))/(self.period**2)
-        return np.ones(X.shape[0])*np.pi**2*self.variance*lengthscale2inv[dimX]*period2inv[dimX]
+        return np.ones(X.shape[0])*np.pi**2*self.variance*lengthscale2inv[dimX]*period2inv[dimX]*(dimX==dimX2)
 
-    def dK2_dXdX(self, X, X2, dimX_0, dimX_1):
-        return -self._clean_dK2_dXdX2(X, X2, dimX_0, dimX_1)
+    def dK2_dXdXdiag(self, X, dimX, dimX2):
+        return -self._clean_dK2_dXdX2diag(X, dimX, dimX2)
 
     def dK3_dXdXdX2(self, X, X2, dimX_0, dimX_1, dimX2):
         lengthscale2inv = np.ones(X.shape[1])/(self.lengthscale**2)
@@ -192,6 +195,9 @@ class StdPeriodic(Kern):
                (dimX_0==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dimX_1)+\
                (dimX_1==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dimX_0)-\
                (dimX_0==dimX_1==dimX2)*4*np.pi**2*period2inv[dimX2]*np.sin(2*base)*self._clean_K(X, X2))
+
+    def dK3_dXdXdX2diag(self, X, dimX_0, dimX):
+        return np.zeros(X.shape[0])
 
     def dK_dvariance(self, X, X2=None):
         if X2 is None:

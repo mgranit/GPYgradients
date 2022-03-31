@@ -39,7 +39,7 @@ class KernCallsViaSlicerMeta(ParametersChangedMeta):
         put_clean(dct, 'gradients_XX_diag', _slice_gradients_XX_diag)
         put_clean(dct, 'gradients_X_diag', _slice_gradients_X_diag)
 
-        put_clean(dct, 'dgradients',_slice_gradients)
+        put_clean(dct, 'dgradients',_slice_K)
         put_clean(dct, 'dgradients_dX',_slice_partial_gradients_list_X)
         put_clean(dct, 'dgradients_dX2',_slice_partial_gradients_list_X)
         put_clean(dct, 'dgradients2_dXdX2',_slice_partial_gradients_list_XX)
@@ -188,23 +188,15 @@ def _slice_dK2_dXdX2diag(f):
 
 def _slice_dK3_dXdXdX2(f):
     @wraps(f)
-    def wrap(self, X, X2, dimX_0, dimX_1, dimX2, *a, **kw):
+    def wrap(self, X, X2, dim, dimX, dimX2, *a, **kw):
         with _Slice_wrap(self, X, X2) as s:
-            d_0 = s.k._project_dim(dimX_0)
-            d_1 = s.k._project_dim(dimX_1)
+            D = s.k._project_dim(dim)
+            d = s.k._project_dim(dimX)
             d2 = s.k._project_dim(dimX2)
-            if (d_0 is None) or (d_1 is None) or (d2 is None):
+            if (D is None) or (d is None) or (d2 is None):
                 ret = np.zeros((X.shape[0], X2.shape[0]))
             else:
-                ret = f(self, s.X, s.X2, d_0, d_1, d2, *a, **kw)
-        return ret
-    return wrap
-
-def _slice_gradients(f):
-    @wraps(f)
-    def wrap(self, X, X2 = None, *a, **kw):
-        with _Slice_wrap(self, X, X2) as s:
-            ret = f(self, s.X, s.X2, *a, **kw)
+                ret = f(self, s.X, s.X2, D, d, d2, *a, **kw)
         return ret
     return wrap
 

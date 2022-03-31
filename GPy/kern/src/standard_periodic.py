@@ -173,8 +173,8 @@ class StdPeriodic(Kern):
             ret += k*(np.pi**2)*period2inv[dimX]*lengthscale2inv[dimX]*np.cos(2.*base[dimX,:,:])
         return ret
 
-    def dK2_dXdX(self, X, X2, dimX, dimX2):
-        return -self._clean_dK2_dXdX2(X, X2, dimX, dimX2)
+    def dK2_dXdX(self, X, X2, dim, dimX):
+        return -self._clean_dK2_dXdX2(X, X2, dim, dimX)
 
     def dK2_dXdX2diag(self, X, dimX, dimX2):
         lengthscale2inv = np.ones((X.shape[1]))/(self.lengthscale**2)
@@ -184,19 +184,19 @@ class StdPeriodic(Kern):
     def dK2_dXdXdiag(self, X, dimX, dimX2):
         return -self._clean_dK2_dXdX2diag(X, dimX, dimX2)
 
-    def dK3_dXdXdX2(self, X, X2, dimX_0, dimX_1, dimX2):
+    def dK3_dXdXdX2(self, X, X2, dim, dimX, dimX2):
         lengthscale2inv = np.ones(X.shape[1])/(self.lengthscale**2)
         periodinv = np.ones(X.shape[1])/(self.period)
         period2inv = np.ones(X.shape[1])/(self.period**2)
         dist = X[:,None,dimX2] - X2[None,:,dimX2]
         base = np.pi * periodinv[dimX2] * dist
         return 0.5*np.pi*lengthscale2inv[dimX2]*periodinv[dimX2]*(\
-               np.sin(2*base)*self._clean_dK2_dXdX(X, X2, dimX_0, dimX_1)+\
-               (dimX_0==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dimX_1)+\
-               (dimX_1==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dimX_0)-\
-               (dimX_0==dimX_1==dimX2)*4*np.pi**2*period2inv[dimX2]*np.sin(2*base)*self._clean_K(X, X2))
+               np.sin(2*base)*self._clean_dK2_dXdX(X, X2, dim, dimX)+\
+               (dim==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dimX)+\
+               (dimX==dimX2)*2*np.pi*periodinv[dimX2]*np.cos(2*base)*self._clean_dK_dX(X, X2, dim)-\
+               (dim==dimX==dimX2)*4*np.pi**2*period2inv[dimX2]*np.sin(2*base)*self._clean_K(X, X2))
 
-    def dK3_dXdXdX2diag(self, X, dimX_0, dimX):
+    def dK3_dXdXdX2diag(self, X, dim, dimX):
         return np.zeros(X.shape[0])
 
     def dK_dvariance(self, X, X2=None):

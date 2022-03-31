@@ -11,15 +11,15 @@ class KernWrapper(Kern):
         self.fk = fk
         self.fug = fug
         self.fg = fg
-        self.fd = fd
+        self.fdx = fd
         self.base_kern = base_kern
         super(KernWrapper, self).__init__(base_kern.active_dims.size, base_kern.active_dims, name='KernWrapper',useGPU=False)
 
     def K(self, X, X2=None):
         return self.fk(X,X2=X2)
 
-    def dK_dX(self, X, X2, dimX_0):
-        return self.fd(X, X2, dimX_0)
+    def dK_dX(self, X, X2, dim):
+        return self.fdx(X, X2, dim)
     
     def update_gradients_full(self,dL_dK, X, X2=None):
         return self.fug(dL_dK, X, X2=X2)

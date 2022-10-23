@@ -7,19 +7,19 @@ import numpy as np
 from functools import partial
 
 class KernWrapper(Kern):
-    def __init__(self, fk, fug, fg, fd, base_kern):
+    def __init__(self, fk, fug, fg, fkdx, base_kern):
         self.fk = fk
         self.fug = fug
         self.fg = fg
-        self.fdx = fd
+        self.fkdx = fkdx
         self.base_kern = base_kern
         super(KernWrapper, self).__init__(base_kern.active_dims.size, base_kern.active_dims, name='KernWrapper',useGPU=False)
 
     def K(self, X, X2=None):
         return self.fk(X,X2=X2)
 
-    def dK_dX(self, X, X2, dim):
-        return self.fdx(X, X2, dim)
+    def dK_dX(self, X, X2, dim_pred_grads):
+        return self.fkdx(X, X2, dim_pred_grads)
     
     def update_gradients_full(self,dL_dK, X, X2=None):
         return self.fug(dL_dK, X, X2=X2)

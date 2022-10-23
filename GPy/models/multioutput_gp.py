@@ -71,24 +71,27 @@ class MultioutputGP(GP):
         return super(MultioutputGP, self).predict_quantiles(X, quantiles, Y_metadata, kern, likelihood)
     
     def predictive_gradients(self, Xnew, kern=None):
-        if isinstance(Xnew, list):
-            Xnew, _, ind  = util.multioutput.build_XY(Xnew, None)
-            #if Y_metadata is None:
-                #Y_metadata={'output_index': ind}
-        return super(MultioutputGP, self).predictive_gradients(Xnew, kern)
-
-    def predictive_gradients(self, Xnew, kern=None): #XNEW IS NOT A LIST!!
         """
-        Compute the derivatives of the predicted latent function with respect to X*
+        Compute the derivatives of the predicted latent function with respect
+        to X*
+
+        Xnew is a given as a list, where each element is a set of points at
+        which to predict: [X*, dX_1*, ..., dX_Q*]
+
         Given a set of points at which to predict X* (size [N*,Q]), compute the
         derivatives of the mean and variance. Resulting arrays are sized:
-         dmu_dX* -- [N*, Q ,D], where D is the number of output in this GP (usually one).
-        Note that this is not the same as computing the mean and variance of the derivative of the function!
+            dmu_dX* -- [N*, Q ,D], where D is the number of output in this GP
+            (usually one).
+
+        Note that this is not the same as computing the mean and variance of
+        the derivative of the function!
+
          dv_dX*  -- [N*, Q],    (since all outputs have the same variance)
         :param X: The points at which to get the predictive gradients
         :type X: np.ndarray (Xnew x self.input_dim)
         :returns: dmu_dX, dv_dX
         :rtype: [np.ndarray (N*, Q ,D), np.ndarray (N*,Q) ]
+
         """
         
         if isinstance(Xnew, list):
@@ -100,9 +103,10 @@ class MultioutputGP(GP):
             kern = self.kern
 
         if all([(kern.name == 'DiffKern') for kern in self.kern.kern[1:]]):
-            '''
+            """
             Predictive gradients for models that observe gradients.
-            '''
+            """
+
             dims = Xnew.shape[1]-1
 
             mean_jac = np.empty((Xnew.shape[0], dims))
@@ -112,9 +116,9 @@ class MultioutputGP(GP):
             alpha = self.posterior.woodbury_vector
             Wi = self.posterior.woodbury_inv
 
-            for i in range(dims):
-                mean_jac[:,i] = np.dot(kern.dK_dX(Xnew, X, i), alpha).flatten()
-                var_jac[:,i] = kern.dK_dXdiag(Xnew, i) - 2 * (np.dot(kern.K(Xnew, X), Wi) * kern.dK_dX(Xnew, X, i)).sum(-1)
+            for dim_pred_grads in range(dims):
+                mean_jac[:,dim_pred_grads] = np.dot(kern.dK_dX(Xnew, X, dim_pred_grads), alpha).flatten()
+                var_jac[:,dim_pred_grads] = kern.dK_dXdiag(Xnew, dim_pred_grads) - 2 * (np.dot(kern.K(Xnew, X), Wi) * kern.dK_dX(Xnew, X, dim_pred_grads)).sum(-1)
             return mean_jac, var_jac
 
         mean_jac = np.empty((Xnew.shape[0],Xnew.shape[1]-1,self.output_dim))
